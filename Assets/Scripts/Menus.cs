@@ -9,6 +9,7 @@ public class Menus : MonoBehaviour
     public GameObject LostMenu;
     public GameObject WinMenu;
     public GameObject stopButton;
+    public GameObject SonrakineGecButton;
 
     public GameObject OyunAlti;
     public GameObject OyunBes;
@@ -22,6 +23,7 @@ public class Menus : MonoBehaviour
     OyunDort oyunDort;
     OyunUc oyunUc;
     OyunIki oyunIki;
+    OyunBir oyunBir;
 
     public bool gameStop = false;
 
@@ -47,16 +49,34 @@ public class Menus : MonoBehaviour
         {
             oyunIki = OyunIki.GetComponent<OyunIki>();
         }
+        if (OyunBir != null)
+        {
+            oyunBir = OyunBir.GetComponent<OyunBir>();
+        }
     }
-
     void Update()
     {
-        if (OyunAlti != null && oyunAlti.oyunKaybedildi == true)
+        if (OyunAlti != null)
         {
-            Time.timeScale = 0;
-            LostMenu.SetActive(true);
-            stopButton.SetActive(false);
-            gameStop = true;
+            if (oyunAlti.oyunKazanildi == true)
+            {
+                Time.timeScale = 0;
+                WinMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunAlti.oyunKaybedildi == true)
+            {
+                Time.timeScale = 0;
+                LostMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunAlti.sonrakineGecButton == true)
+            {
+                SonrakineGecButton.SetActive(true);
+                gameStop = true;
+            }
         }
         if (OyunBes != null && oyunBes.oyunKazanildi == true)
         {
@@ -65,21 +85,57 @@ public class Menus : MonoBehaviour
             stopButton.SetActive(false);
             gameStop = true;
         }
-        if (OyunDort != null && oyunDort.oyunKaybedildi == true)
+        if (OyunDort != null)
         {
-            Time.timeScale = 0;
-            LostMenu.SetActive(true);
-            stopButton.SetActive(false);
-            gameStop = true;
+            if (oyunDort.oyunKazanildi == true)
+            {
+                Time.timeScale = 0;
+                WinMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunDort.oyunKaybedildi == true)
+            {
+                Time.timeScale = 0;
+                LostMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunDort.sonrakineGecButton == true && oyunDort.oyunKazanildi == false && oyunDort.oyunKaybedildi == false)
+            {
+                SonrakineGecButton.SetActive(true);
+                gameStop = true;
+            }
         }
-        if (OyunUc != null && oyunUc.oyunKaybedildi == true)
+        if (OyunUc != null)
         {
-            Time.timeScale = 0;
-            LostMenu.SetActive(true);
-            stopButton.SetActive(false);
-            gameStop = true;
+            if (oyunUc.oyunKazanildi == true)
+            {
+                Time.timeScale = 0;
+                WinMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunUc.oyunKaybedildi == true)
+            {
+                Time.timeScale = 0;
+                LostMenu.SetActive(true);
+                stopButton.SetActive(false);
+                gameStop = true;
+            }
+            if (oyunUc.sonrakineGecButton == true && oyunUc.oyunKazanildi == false && oyunUc.oyunKaybedildi == false)
+            {
+                SonrakineGecButton.SetActive(true);
+                gameStop = true;
+            }
         }
         if (OyunIki != null && oyunIki.oyunKazanildi == true)
+        {
+            WinMenu.SetActive(true);
+            stopButton.SetActive(false);
+            gameStop = true;
+        }
+        if (OyunBir != null && oyunBir.oyunKazanildi == true)
         {
             WinMenu.SetActive(true);
             stopButton.SetActive(false);
@@ -104,11 +160,28 @@ public class Menus : MonoBehaviour
         gameStop = false;
         ESCMenu.SetActive(false);
         stopButton.SetActive(true);
-
+    }
+    public  void SonrakineGec()
+    {
+        Time.timeScale = 1;
+        gameStop = false;
+        SonrakineGecButton.SetActive(false);
+        if (OyunAlti != null)
+        {
+            oyunAlti.sonrakineGecButton = false;
+        }
+        if (oyunUc != null)
+        {
+            oyunUc.sonrakineGecButton = false;
+        }
+        if (oyunDort != null)
+        {
+            oyunDort.sonrakineGecButton = false;
+        }
     }
     public void OpenGameOne()
     {
-        SceneManager.LoadScene("2Oyun");
+        SceneManager.LoadScene("1Oyun");
     }
     public void OpenGameTwo()
     {

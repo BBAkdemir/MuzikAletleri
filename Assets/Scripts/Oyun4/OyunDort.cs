@@ -36,10 +36,14 @@ public class OyunDort : MonoBehaviour
     int sayi = 0;
 
     public bool trueMi = false;
-    public bool birdahakiSoruyaGec = true;
     public bool yenidenDinle = false;
 
     public bool oyunKaybedildi = false;
+    public bool oyunKazanildi = false;
+
+    public bool YanlisMuzikCal = false;
+    public bool DogruMuzikCal = false;
+    public bool sonrakineGecButton = false;
     void Start()
     {
         musicalInstruments = new List<string>();
@@ -158,8 +162,8 @@ public class OyunDort : MonoBehaviour
         {
             for (int i = -1; i < HowManyOption - 1; i++)
             {
-                Vector3 position = new Vector3((i * 1.75f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3((i * 2.25f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
 
                 var optionCards = new OptionCards()
@@ -177,8 +181,8 @@ public class OyunDort : MonoBehaviour
         {
             for (int i = -1; i < 1; i++)
             {
-                Vector3 position = new Vector3(((i * 1.75f) - 0.875f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3(((i * 2.25f) - 1.125f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -190,8 +194,8 @@ public class OyunDort : MonoBehaviour
             }
             for (int i = 0; i < 2; i++)
             {
-                Vector3 position = new Vector3(((i * 1.75f) + 0.875f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3(((i * 2.25f) + 1.125f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -208,8 +212,8 @@ public class OyunDort : MonoBehaviour
         {
             for (int i = -2; i < HowManyOption - 2; i++)
             {
-                Vector3 position = new Vector3((i * 1.75f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3((i * 2.25f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -228,87 +232,103 @@ public class OyunDort : MonoBehaviour
     {
         if (cevaplananYanlisSoruSayisi < yanlisBilmeHakki)
         {
-            if (birdahakiSoruyaGec == true && cevaplananSoruSayisi < 41 && sayi < options.Count() - 1)
+            if (sonrakineGecButton == false)
             {
-                birdahakiSoruyaGec = false;
-                CardQuestion();
-                selectedMusicalInstruments = new List<string>();
-                trueOption = new System.Random().Next(options.Count());
-                for (int i = 0; i < options.Count; i++)
+                if (cevaplananSoruSayisi < 41 && sayi < options.Count() - 1)
                 {
-                    if (i == trueOption)
+                    CardQuestion();
+                    selectedMusicalInstruments = new List<string>();
+                    trueOption = new System.Random().Next(options.Count());
+                    for (int i = 0; i < options.Count; i++)
                     {
-                        options[i].Instrument = Question;
-                        selectedMusicalInstruments.Add(Question);
-                        sayi++;
-                    }
-                }
-
-                foreach (var item in options)
-                {
-                    if (item.Id != trueOption)
-                    {
-                        item.Instrument = InsturmentSelect();
-                        sayi++;
-                    }
-                }
-
-                for (int i = 0; i < options.Count; i++)
-                {
-                    GameObject.Find("SecenekCard" + i).transform.GetChild(0).GetChild(0).GetComponent<Text>().text = options[i].Instrument;
-                    foreach (var image in Images)
-                    {
-                        if (image.name == options[i].Instrument)
+                        if (i == trueOption)
                         {
-                            GameObject.Find("SecenekCard" + i).transform.GetChild(0).GetChild(1).GetComponent<Image>().sprite = image;
+                            options[i].Instrument = Question;
+                            selectedMusicalInstruments.Add(Question);
+                            sayi++;
+                        }
+                    }
+
+                    foreach (var item in options)
+                    {
+                        if (item.Id != trueOption)
+                        {
+                            item.Instrument = InsturmentSelect();
+                            sayi++;
+                        }
+                    }
+
+                    for (int i = 0; i < options.Count; i++)
+                    {
+                        GameObject.Find("SecenekCard" + i).transform.GetChild(6).GetChild(0).GetComponent<Text>().text = options[i].Instrument;
+                        foreach (var image in Images)
+                        {
+                            if (image.name == options[i].Instrument)
+                            {
+                                GameObject.Find("SecenekCard" + i).transform.GetChild(6).GetChild(1).GetComponent<Image>().sprite = image;
+                            }
                         }
                     }
                 }
-            }
 
-            if (clickObject.GetComponent<ClickControl>() != null)
-            {
-                clickControl = clickObject.GetComponent<ClickControl>();
-            }
-            if (clickControl.SelectedObject != null && clickControl.SelectedObject.name == "SoruCard")
-            {
-                yenidenDinle = true;
-            }
-            var yanlis = false;
-            if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Secenek"))
-            {
-                foreach (var item in options)
+                if (clickObject.GetComponent<ClickControl>() != null)
                 {
-                    if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(0).GetChild(0).GetComponent<Text>().text == Question /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
-                    {
-                        sayi = 0;
-                        cevaplananDogruSoruSayisi++;
-                        yanlis = false;
-                        trueMi = true;
-                        birdahakiSoruyaGec = true;
-                        clickControl.SelectedObject = null;
-                        break;
-                    }
-                    else
-                    {
-                        yanlis = true;
-                    }
+                    clickControl = clickObject.GetComponent<ClickControl>();
                 }
-                if (yanlis == true)
+                if (clickControl.SelectedObject != null && clickControl.SelectedObject.name == "SoruCard")
                 {
-                    sayi = 0;
-                    cevaplananYanlisSoruSayisi++;
-                    YanlisSayisiCanvas.transform.GetChild(0).GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
-                    birdahakiSoruyaGec = true;
-                    yanlis = false;
+                    yenidenDinle = true;
+                }
+                var yanlis = false;
+                if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Secenek"))
+                {
+                    foreach (var item in options)
+                    {
+                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(6).GetChild(0).GetComponent<Text>().text == Question /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
+                        {
+                            DogruMuzikCal = true;
+                            sayi = 0;
+                            cevaplananDogruSoruSayisi++;
+                            yanlis = false;
+                            trueMi = true;
+                            sonrakineGecButton = true;
+                            clickControl.SelectedObject = null;
+                            break;
+                        }
+                        else
+                        {
+                            yanlis = true;
+                        }
+                    }
+                    if (yanlis == true)
+                    {
+                        YanlisMuzikCal = true;
+                        sayi = 0;
+                        cevaplananYanlisSoruSayisi++;
+                        YanlisSayisiCanvas.transform.GetChild(0).GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
+                        sonrakineGecButton = true;
+                        yanlis = false;
+                        clickControl.SelectedObject = null;
+                    }
+                    cevaplananSoruSayisi++;
+                }
+            }
+            else
+            {
+                if (clickObject.GetComponent<ClickControl>() != null)
+                {
+                    clickControl = clickObject.GetComponent<ClickControl>();
                     clickControl.SelectedObject = null;
                 }
-                cevaplananSoruSayisi++;
             }
         }
         else
         {
             oyunKaybedildi = true;
+        }
+        if (cevaplananSoruSayisi == 41)
+        {
+            oyunKazanildi = true;
         }
     }
 }

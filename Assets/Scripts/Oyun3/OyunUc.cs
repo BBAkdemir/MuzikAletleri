@@ -36,9 +36,12 @@ public class OyunUc : MonoBehaviour
     int sayi = 0;
 
     public bool trueMi = false;
+    public bool falseMi = false;
     public bool birdahakiSoruyaGec = true;
 
     public bool oyunKaybedildi = false;
+    public bool oyunKazanildi = false;
+    public bool sonrakineGecButton = false;
     void Start()
     {
         musicalInstruments = new List<string>();
@@ -164,8 +167,8 @@ public class OyunUc : MonoBehaviour
         {
             for (int i = -1; i < HowManyOption - 1; i++)
             {
-                Vector3 position = new Vector3((i * 1.75f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3((i * 2.25f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
 
                 var optionCards = new OptionCards()
@@ -183,8 +186,8 @@ public class OyunUc : MonoBehaviour
         {
             for (int i = -1; i < 1; i++)
             {
-                Vector3 position = new Vector3(((i * 1.75f) - 0.875f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3(((i * 2.25f) - 1.125f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -196,8 +199,8 @@ public class OyunUc : MonoBehaviour
             }
             for (int i = 0; i < 2; i++)
             {
-                Vector3 position = new Vector3(((i * 1.75f) + 0.875f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3(((i * 2.25f) + 1.125f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -214,8 +217,8 @@ public class OyunUc : MonoBehaviour
         {
             for (int i = -2; i < HowManyOption - 2; i++)
             {
-                Vector3 position = new Vector3((i * 1.75f), 0, -3);
-                var newCard = Instantiate(SecenekCard, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3((i * 2.25f), 0, -3);
+                var newCard = Instantiate(SecenekCard, position, SecenekCard.transform.rotation);
                 newCard.name = "SecenekCard" + a + Instrument;
                 var optionCards = new OptionCards()
                 {
@@ -233,76 +236,91 @@ public class OyunUc : MonoBehaviour
     {
         if (cevaplananYanlisSoruSayisi < yanlisBilmeHakki)
         {
-            if (birdahakiSoruyaGec == true && cevaplananSoruSayisi < 41 && sayi < options.Count() - 1)
+            if (sonrakineGecButton == false)
             {
-                birdahakiSoruyaGec = false;
-                CardQuestion();
-                selectedMusicalInstruments = new List<string>();
-                trueOption = new System.Random().Next(options.Count());
-                for (int i = 0; i < options.Count; i++)
+                if (cevaplananSoruSayisi < 41 && sayi < options.Count() - 1)
                 {
-                    if (i == trueOption)
+                    CardQuestion();
+                    selectedMusicalInstruments = new List<string>();
+                    trueOption = new System.Random().Next(options.Count());
+                    for (int i = 0; i < options.Count; i++)
                     {
-                        options[i].Instrument = Question;
-                        selectedMusicalInstruments.Add(Question);
-                        sayi++;
+                        if (i == trueOption)
+                        {
+                            options[i].Instrument = Question;
+                            selectedMusicalInstruments.Add(Question);
+                            sayi++;
+                        }
+                    }
+
+                    foreach (var item in options)
+                    {
+                        if (item.Id != trueOption)
+                        {
+                            item.Instrument = InsturmentSelect();
+                            sayi++;
+                        }
+                    }
+
+                    for (int i = 0; i < options.Count; i++)
+                    {
+                        GameObject.Find("SecenekCard" + i).transform.GetChild(6).transform.GetChild(0).GetComponent<Text>().text = options[i].Instrument;
                     }
                 }
 
-                foreach (var item in options)
+                if (clickObject.GetComponent<ClickControl>() != null)
                 {
-                    if (item.Id != trueOption)
+                    clickControl = clickObject.GetComponent<ClickControl>();
+                }
+                var yanlis = false;
+                if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Secenek"))
+                {
+                    foreach (var item in options)
                     {
-                        item.Instrument = InsturmentSelect();
-                        sayi++;
+                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(6).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
+                        {
+                            sayi = 0;
+                            cevaplananDogruSoruSayisi++;
+                            yanlis = false;
+                            trueMi = true;
+                            sonrakineGecButton = true;
+                            clickControl.SelectedObject = null;
+                            break;
+                        }
+                        else
+                        {
+                            yanlis = true;
+                        }
                     }
-                }
-
-                for (int i = 0; i < options.Count; i++)
-                {
-                    GameObject.Find("SecenekCard" + i).transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text = options[i].Instrument;
-                }
-            }
-
-            if (clickObject.GetComponent<ClickControl>() != null)
-            {
-                clickControl = clickObject.GetComponent<ClickControl>();
-            }
-            var yanlis = false;
-            if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Secenek"))
-            {
-                foreach (var item in options)
-                {
-                    if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
+                    if (yanlis == true)
                     {
+                        falseMi = true;
                         sayi = 0;
-                        cevaplananDogruSoruSayisi++;
+                        cevaplananYanlisSoruSayisi++;
+                        YanlisSayisiCanvas.transform.GetChild(0).GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
+                        sonrakineGecButton = true;
                         yanlis = false;
-                        trueMi = true;
-                        birdahakiSoruyaGec = true;
                         clickControl.SelectedObject = null;
-                        break;
                     }
-                    else
-                    {
-                        yanlis = true;
-                    }
+                    cevaplananSoruSayisi++;
                 }
-                if (yanlis == true)
+            }
+            else
+            {
+                if (clickObject.GetComponent<ClickControl>() != null)
                 {
-                    sayi = 0;
-                    cevaplananYanlisSoruSayisi++;
-                    YanlisSayisiCanvas.transform.GetChild(0).GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
-                    birdahakiSoruyaGec = true;
-                    yanlis = false;
+                    clickControl = clickObject.GetComponent<ClickControl>();
                     clickControl.SelectedObject = null;
                 }
-                cevaplananSoruSayisi++;
             }
         }
         else
         {
             oyunKaybedildi = true;
+        }
+        if (cevaplananSoruSayisi == 41)
+        {
+            oyunKazanildi = true;
         }
     }
 }

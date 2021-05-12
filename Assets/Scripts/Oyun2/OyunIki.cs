@@ -10,6 +10,8 @@ public class OyunIki : MonoBehaviour
 {
     public bool OyunIkiActive = false;
     public GameObject Card;
+    public GameObject TrueObject;
+    public GameObject Masa;
 
     public float time;
     public Text timeText;
@@ -53,6 +55,7 @@ public class OyunIki : MonoBehaviour
     public GameObject turu;
     public GameObject geri;
     public bool acildiMi = false;
+    public bool yanlisEslestirme = false;
 
     public string[] Control;
     void Start()
@@ -103,17 +106,43 @@ public class OyunIki : MonoBehaviour
         musicalInstruments.Add("Korno");
         musicalInstruments.Add("Bandoneon");
 
+        transforms = new List<Transform>();
         if (Difficulty == Difficulty.Easy)
         {
             CardMakerMethod(6, 4, 3);
+            CikanlarPositionBelirleme(6, 2, 3, 5);
+            Masa.transform.position = new Vector3(5.94f, -0.7f, 2.36f);
+            Masa.transform.localScale = new Vector3(0.4329547f, 0.3f, 0.4329547f);
         }
         if (Difficulty == Difficulty.Normal)
         {
             CardMakerMethod(10, 5, 4);
+            CikanlarPositionBelirleme(6, 2, 5, 6);
+            Masa.transform.position = new Vector3(7.18f, -0.7f, 4.69f);
+            Masa.transform.localScale = new Vector3(0.5683795f, 0.3f, 0.5683795f);
         }
         if (Difficulty == Difficulty.Hard)
         {
             CardMakerMethod(15, 6, 5);
+            CikanlarPositionBelirleme(6, 3, 5, 7);
+            Masa.transform.position = new Vector3(9.52f, -0.72f, 5.57f);
+            Masa.transform.localScale = new Vector3(0.653675f, 0.3f, 0.653675f);
+        }
+    }
+
+    public void CikanlarPositionBelirleme(int howManyInstruments, int arrayX, int arrayZ, int BaslangicX)
+    {
+        var a = 0; 
+        for (int i = 0; i < arrayX; i++)
+        {
+            for (int j = 0; j < arrayZ; j++)
+            {
+                a++;
+                Vector3 position = new Vector3(((BaslangicX + i) * 2), 0, (j * 3));
+                var newCard = Instantiate(TrueObject, position, new Quaternion(0,0,0,0));
+                newCard.name = "True" + a;
+                transforms.Add(newCard.transform);
+            }
         }
     }
     public void CardMakerMethod(int howManyInstruments, int arrayX, int arrayZ)
@@ -155,19 +184,21 @@ public class OyunIki : MonoBehaviour
                 }
                 Cards[i, j] = Instrument;
 
-                Vector3 position = new Vector3(i * (Card.transform.localScale.x * 1.5f), 0, j * (Card.transform.localScale.z * 1.5f));
-                var newCard = Instantiate(Card, position, new Quaternion(0, 0, 0, 0));
+                Vector3 position = new Vector3(i * 2.0f, 0, j * 3.0f);
+                var newCard = Instantiate(Card, position, Card.transform.rotation);
                 newCard.name = "Card" + i + j + Instrument;
                 foreach (var item in Images)
                 {
                     if (item.name == Instrument)
                     {
-                        newCard.transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = item;
+                        newCard.transform.GetChild(6).GetChild(0).GetComponent<Image>().sprite = item;
                     }
                 }
-                newCard.transform.GetChild(0).GetChild(1).GetComponent<Text>().text = Instrument;
+                newCard.transform.GetChild(6).GetChild(1).GetComponent<Text>().text = Instrument;
             }
         }
+
+
     }
     void Update()
     {
@@ -217,10 +248,10 @@ public class OyunIki : MonoBehaviour
 
             if (eskiyeDon == true)
             {
-                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(0, 0, 0), Time.deltaTime * 8f);
-                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(0, 0, 0), Time.deltaTime * 8f);
+                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 8f);
+                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 8f);
 
-                if (donecekObje1.transform.rotation.z < Quaternion.Euler(0, 0, -130).z || donecekObje2.transform.rotation.z < Quaternion.Euler(0, 0, -130).z)
+                if (donecekObje1.transform.rotation.z < Quaternion.Euler(-130, -90, 0).z || donecekObje2.transform.rotation.z < Quaternion.Euler(-130, -90, 0).z)
                 {
                     donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 10f);
                     donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 10f);
@@ -230,7 +261,7 @@ public class OyunIki : MonoBehaviour
                     donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 1f);
                     donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 1f);
                 }
-                if ((donecekObje1.transform.rotation == Quaternion.Euler(0, 0, 0) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z)) && (donecekObje2.transform.rotation == Quaternion.Euler(0, 0, 0) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z)))
+                if ((donecekObje1.transform.rotation == Quaternion.Euler(0, -90, 0) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z)) && (donecekObje2.transform.rotation == Quaternion.Euler(0, -90, 0) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z)))
                 {
                     eskiyeDon = false;
                     Control[0] = null;
@@ -241,8 +272,8 @@ public class OyunIki : MonoBehaviour
             if (donecek1 == true && eskiyeDon == false && yedekDonecekObje1 == null)
             {
 
-                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(0, 0, 180), Time.deltaTime * 2.5f);
-                if (donecekObje1.transform.rotation.z > Quaternion.Euler(0, 0, -130).z)
+                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 2.5f);
+                if (donecekObje1.transform.rotation.z > Quaternion.Euler(-130, -90, 0).z)
                 {
                     donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 10f);
                 }
@@ -251,7 +282,7 @@ public class OyunIki : MonoBehaviour
                     donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 1f);
                 }
 
-                if (donecekObje1.transform.rotation == Quaternion.Euler(0, 0, -180) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z))
+                if (donecekObje1.transform.rotation == Quaternion.Euler(-180, -90, 0) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z))
                 {
                     donecek1 = false;
                 }
@@ -259,8 +290,8 @@ public class OyunIki : MonoBehaviour
 
             if (donecek2 == true && eskiyeDon == false)
             {
-                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(0, 0, 180), Time.deltaTime * 2.5f);
-                if (donecekObje2.transform.rotation.z > Quaternion.Euler(0, 0, -130).z)
+                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 2.5f);
+                if (donecekObje2.transform.rotation.z > Quaternion.Euler(-130, -90, 0).z)
                 {
                     donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 10f);
                 }
@@ -268,7 +299,7 @@ public class OyunIki : MonoBehaviour
                 {
                     donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 1f);
                 }
-                if (donecekObje2.transform.rotation == Quaternion.Euler(0, 0, -180) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z))
+                if (donecekObje2.transform.rotation == Quaternion.Euler(-180, -90, 0) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z))
                 {
                     donecek2 = false;
                     if (Control[0].Substring(6, Control[0].Length - 6) == Control[1].Substring(6, Control[1].Length - 6))
@@ -278,6 +309,7 @@ public class OyunIki : MonoBehaviour
                     }
                     else
                     {
+                        yanlisEslestirme = true;
                         eskiyeDon = true;
                     }
                 }

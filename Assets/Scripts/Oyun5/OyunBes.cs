@@ -8,6 +8,8 @@ public class OyunBes : MonoBehaviour
 {
     public Camera camera;
 
+    public GameObject Masa;
+
     public float time;
     public Text timeText;
 
@@ -34,6 +36,7 @@ public class OyunBes : MonoBehaviour
 
     public string Instrument;
     public string CardInstrument;
+    public string CalacakMuzikAleti;
 
     public bool birinciNoktaVerildi = false;
     public bool ikinciNoktaVerildi = true;
@@ -41,14 +44,16 @@ public class OyunBes : MonoBehaviour
     bool SecilenCardResim = false;
     public bool dahaOnceSecilmismi = false;
     public bool oyunKazanildi = false;
+    public bool MuzikCal = false;
+    public bool YanlisMuzikCal = false;
 
     LineRenderers lineRenderersClass;
     QuestionCard questionCardClass;
 
     public string[] Control;
 
-    int KacDogruOlmali;
-    int KacDogruOldu = 0;
+    public int KacDogruOlmali;
+    public int KacDogruOldu = 0;
     void Start()
     {
         time = 0;
@@ -105,10 +110,14 @@ public class OyunBes : MonoBehaviour
         if (difficulty == Difficulty.Normal)
         {
             CardMaker(10);
+            Masa.transform.position = new Vector3(0, -0.65f, 0.71f);
+            Masa.transform.localScale = new Vector3(0.396002f, 0.3f, 0.396002f);
         }
         if (difficulty == Difficulty.Hard)
         {
             CardMaker(14);
+            Masa.transform.position = new Vector3(0, -0.65f, 0.71f);
+            Masa.transform.localScale = new Vector3(0.5491556f, 0.3f, 0.5491556f);
         }
         
     }
@@ -125,13 +134,13 @@ public class OyunBes : MonoBehaviour
             {
                 Vector3 positionCardIsim = new Vector3(-2.25f, 0, (i * 1.25f));
                 Vector3 positionCardResim = new Vector3(2.25f, 0, (i * 1.25f));
-                var newCardIsim = Instantiate(CardIsim, positionCardIsim, new Quaternion(0, 0, 0, 0));
+                var newCardIsim = Instantiate(CardIsim, positionCardIsim, CardIsim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardIsim
                 };
                 CardIsims.Add(questionCardClass);
-                var newCardResim = Instantiate(CardResim, positionCardResim, new Quaternion(0, 0, 0, 0));
+                var newCardResim = Instantiate(CardResim, positionCardResim, CardResim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardResim
@@ -148,13 +157,13 @@ public class OyunBes : MonoBehaviour
             {
                 Vector3 positionCardIsim = new Vector3(-2.25f, 0, (i * 1.25f));
                 Vector3 positionCardResim = new Vector3(2.25f, 0, (i * 1.25f));
-                var newCardIsim = Instantiate(CardIsim, positionCardIsim, new Quaternion(0, 0, 0, 0));
+                var newCardIsim = Instantiate(CardIsim, positionCardIsim, CardIsim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardIsim
                 };
                 CardIsims.Add(questionCardClass);
-                var newCardResim = Instantiate(CardResim, positionCardResim, new Quaternion(0, 0, 0, 0));
+                var newCardResim = Instantiate(CardResim, positionCardResim, CardResim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardResim
@@ -172,13 +181,13 @@ public class OyunBes : MonoBehaviour
             {
                 Vector3 positionCardIsim = new Vector3(-2.25f, 0, (i * 1.25f));
                 Vector3 positionCardResim = new Vector3(2.25f, 0, (i * 1.25f));
-                var newCardIsim = Instantiate(CardIsim, positionCardIsim, new Quaternion(0, 0, 0, 0));
+                var newCardIsim = Instantiate(CardIsim, positionCardIsim, CardIsim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardIsim
                 };
                 CardIsims.Add(questionCardClass);
-                var newCardResim = Instantiate(CardResim, positionCardResim, new Quaternion(0, 0, 0, 0));
+                var newCardResim = Instantiate(CardResim, positionCardResim, CardResim.transform.rotation);
                 questionCardClass = new QuestionCard()
                 {
                     Card = newCardResim
@@ -235,7 +244,7 @@ public class OyunBes : MonoBehaviour
 
         foreach (var item in CardIsims)
         {
-            item.Card.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Text>().text = item.Instrument;
+            item.Card.transform.GetChild(6).GetChild(0).gameObject.GetComponent<Text>().text = item.Instrument;
         }
         foreach (var item in CardResims)
         {
@@ -243,7 +252,7 @@ public class OyunBes : MonoBehaviour
             {
                 if (item1.name.Equals(item.Instrument))
                 {
-                    item.Card.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Image>().sprite = item1;
+                    item.Card.transform.GetChild(6).GetChild(0).gameObject.GetComponent<Image>().sprite = item1;
                     break;
                 }
             }
@@ -275,7 +284,7 @@ public class OyunBes : MonoBehaviour
                     newLineRendererObject = Instantiate(LineRendererObject, clickControl.SelectedObject.transform.position, new Quaternion(0, 0, 0, 0));
 
                     newLineRendererObject.name = "LineRendererObject" + lineRenderers.Count;
-                    newLineRendererObject.GetComponent<LineRenderer>().SetPosition(0, clickControl.SelectedObject.transform.GetChild(1).position);
+                    newLineRendererObject.GetComponent<LineRenderer>().SetPosition(0, clickControl.SelectedObject.transform.GetChild(7).position);
                     lineRenderersClass = new LineRenderers()
                     {
                         LineRenderer = newLineRendererObject,
@@ -342,10 +351,10 @@ public class OyunBes : MonoBehaviour
                     }
                     if ((SecilenCardIsim == true && clickControl.SelectedObject.name.Contains("Resim") && dahaOnceSecilmismi == false) || (SecilenCardResim == true && clickControl.SelectedObject.name.Contains("Isim") && dahaOnceSecilmismi == false))
                     {
-                        newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, clickControl.SelectedObject.transform.GetChild(1).position);
+                        newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, clickControl.SelectedObject.transform.GetChild(7).position);
                         lineRenderers[lineRenderers.IndexOf(lineRenderersClass)].CardTwo = clickControl.SelectedObject;
                         ikinciNoktaVerildi = true;
-                        if (SecilenCardIsim == false)
+                        if (SecilenCardResim == true)
                         {
                             foreach (var item in CardIsims)
                             {
@@ -356,7 +365,7 @@ public class OyunBes : MonoBehaviour
                                 }
                             }
                         }
-                        else
+                        if (SecilenCardIsim == true)
                         {
                             foreach (var item in CardResims)
                             {
@@ -369,6 +378,7 @@ public class OyunBes : MonoBehaviour
                         }
                         if (Control[0] != null && Control[1] != null && Control[0] != Control[1])
                         {
+                            YanlisMuzikCal = true;
                             Destroy(newLineRendererObject);
                             lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
                             ikinciNoktaVerildi = true;
@@ -378,6 +388,8 @@ public class OyunBes : MonoBehaviour
                         }
                         if (Control[0] != null && Control[1] != null && Control[0] == Control[1])
                         {
+                            CalacakMuzikAleti = Control[0];
+                            MuzikCal = true;
                             KacDogruOldu++;
                         }
                         clickControl.SelectedObject = null;
