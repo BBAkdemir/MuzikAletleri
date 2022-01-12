@@ -11,13 +11,9 @@ public class OyunIki : MonoBehaviour
     public bool OyunIkiActive = false;
     public GameObject Card;
     public GameObject TrueObject;
-    public GameObject Masa;
-
-    public float time;
-    public Text timeText;
 
     Datalar datalar;
-    public ClickControl clickControl;
+    public Click clickControl;
     public GameObject clickObject;
 
     public Difficulty Difficulty;
@@ -58,8 +54,36 @@ public class OyunIki : MonoBehaviour
     public bool yanlisEslestirme = false;
 
     public string[] Control;
+
+    #region zaman Deðiþkenleri
+    public GameObject DuraklatMenu;
+    public GameObject TimeObjectSoruBasinaZaman;
+    public GameObject ScoreObject;
+    Text SoruBasinaZamanObject;
+    Text ScoreObjectText;
+    int Scores = 0;
+    float SoruBasinaZaman = 0;
+    int SoruBasinaZamanYedek = 0;
+    int KartBasinaPuan = 100;
+    int SaniyeBasinaPuan = 1;
+    bool ZamaniSifirla = false;
+    #endregion
     void Start()
     {
+        if (PlayerPrefs.GetString("OyunIkiZorluk") == "Kolay")
+        {
+            Difficulty = Difficulty.Easy;
+        }
+        if (PlayerPrefs.GetString("OyunIkiZorluk") == "Orta")
+        {
+            Difficulty = Difficulty.Normal;
+        }
+        if (PlayerPrefs.GetString("OyunIkiZorluk") == "Zor")
+        {
+            Difficulty = Difficulty.Hard;
+        }
+        SoruBasinaZamanObject = TimeObjectSoruBasinaZaman.GetComponent<Text>();
+        ScoreObjectText = ScoreObject.GetComponent<Text>();
         OyunIkiActive = true;
         bilgiler = new List<Bilgiler>();
         Control = new string[2];
@@ -70,7 +94,7 @@ public class OyunIki : MonoBehaviour
         musicalInstruments.Add("Ney");
         musicalInstruments.Add("Tar");
         musicalInstruments.Add("Ud");
-        musicalInstruments.Add("ElektroGitar");
+        musicalInstruments.Add("Elektro Gitar");
         musicalInstruments.Add("Gitar");
         musicalInstruments.Add("Cümbüþ");
         musicalInstruments.Add("Mandolin");
@@ -111,35 +135,29 @@ public class OyunIki : MonoBehaviour
         {
             CardMakerMethod(6, 4, 3);
             CikanlarPositionBelirleme(6, 2, 3, 5);
-            Masa.transform.position = new Vector3(5.94f, -0.7f, 2.36f);
-            Masa.transform.localScale = new Vector3(0.4329547f, 0.3f, 0.4329547f);
         }
         if (Difficulty == Difficulty.Normal)
         {
             CardMakerMethod(10, 5, 4);
             CikanlarPositionBelirleme(6, 2, 5, 6);
-            Masa.transform.position = new Vector3(7.18f, -0.7f, 4.69f);
-            Masa.transform.localScale = new Vector3(0.5683795f, 0.3f, 0.5683795f);
         }
         if (Difficulty == Difficulty.Hard)
         {
             CardMakerMethod(15, 6, 5);
             CikanlarPositionBelirleme(6, 3, 5, 7);
-            Masa.transform.position = new Vector3(9.52f, -0.72f, 5.57f);
-            Masa.transform.localScale = new Vector3(0.653675f, 0.3f, 0.653675f);
         }
     }
 
     public void CikanlarPositionBelirleme(int howManyInstruments, int arrayX, int arrayZ, int BaslangicX)
     {
-        var a = 0; 
+        var a = 0;
         for (int i = 0; i < arrayX; i++)
         {
             for (int j = 0; j < arrayZ; j++)
             {
                 a++;
                 Vector3 position = new Vector3(((BaslangicX + i) * 2), 0, (j * 3));
-                var newCard = Instantiate(TrueObject, position, new Quaternion(0,0,0,0));
+                var newCard = Instantiate(TrueObject, position, new Quaternion(0, 0, 0, 0));
                 newCard.name = "True" + a;
                 transforms.Add(newCard.transform);
             }
@@ -191,10 +209,10 @@ public class OyunIki : MonoBehaviour
                 {
                     if (item.name == Instrument)
                     {
-                        newCard.transform.GetChild(6).GetChild(0).GetComponent<Image>().sprite = item;
+                        newCard.transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = item;
                     }
                 }
-                newCard.transform.GetChild(6).GetChild(1).GetComponent<Text>().text = Instrument;
+                newCard.transform.GetChild(0).GetChild(1).GetComponent<Text>().text = Instrument;
             }
         }
 
@@ -202,10 +220,30 @@ public class OyunIki : MonoBehaviour
     }
     void Update()
     {
-
-        if (clickObject.GetComponent<ClickControl>() != null)
+        if (DuraklatMenu.activeSelf == false && oyunKazanildi == false && ZamaniSifirla == false)
         {
-            clickControl = clickObject.GetComponent<ClickControl>();
+            SoruBasinaZaman += Time.deltaTime;
+            SoruBasinaZamanObject.text = "" + (int)SoruBasinaZaman;
+        }
+        if (ZamaniSifirla == true)
+        {
+            Scores += KartBasinaPuan - ((int)SoruBasinaZaman * SaniyeBasinaPuan);
+            SoruBasinaZaman = SoruBasinaZamanYedek;
+            ZamaniSifirla = false;
+            ScoreObjectText.text = "" + Scores;
+        }
+        if (oyunKazanildi == true)
+        {
+            if (Scores <= 0)
+            {
+                Scores = 0;
+            }
+            PlayerPrefs.SetInt("Puan", Scores);
+        }
+
+        if (clickObject.GetComponent<Click>() != null)
+        {
+            clickControl = clickObject.GetComponent<Click>();
         }
 
         if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Bilgi"))
@@ -224,14 +262,10 @@ public class OyunIki : MonoBehaviour
                     canvas.SetActive(true);
                 }
             }
-
         }
 
         if (kacDogruOldu < kacDogruOlmali)
         {
-            time += Time.deltaTime;
-            timeText.text = "" + (int)time;
-
             if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Card") && Control[0] == null && Control[1] == null && Control[0] != clickControl.SelectedObject.name && eskiyeDon == false && tasinacak != true)
             {
                 Control[0] = clickControl.SelectedObject.name;
@@ -248,18 +282,18 @@ public class OyunIki : MonoBehaviour
 
             if (eskiyeDon == true)
             {
-                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 8f);
-                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 8f);
+                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 12f);
+                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(0, -90, 0), Time.deltaTime * 12f);
 
                 if (donecekObje1.transform.rotation.z < Quaternion.Euler(-130, -90, 0).z || donecekObje2.transform.rotation.z < Quaternion.Euler(-130, -90, 0).z)
                 {
-                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 10f);
-                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 10f);
+                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 14f);
+                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 14f);
                 }
                 else
                 {
-                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 1f);
-                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 1f);
+                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 2f);
+                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 2f);
                 }
                 if ((donecekObje1.transform.rotation == Quaternion.Euler(0, -90, 0) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z)) && (donecekObje2.transform.rotation == Quaternion.Euler(0, -90, 0) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z)))
                 {
@@ -271,17 +305,15 @@ public class OyunIki : MonoBehaviour
 
             if (donecek1 == true && eskiyeDon == false && yedekDonecekObje1 == null)
             {
-
-                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 2.5f);
+                donecekObje1.transform.rotation = Quaternion.Lerp(donecekObje1.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 5f);
                 if (donecekObje1.transform.rotation.z > Quaternion.Euler(-130, -90, 0).z)
                 {
-                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 10f);
+                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 1, donecekObje1.transform.position.z), Time.deltaTime * 14f);
                 }
                 else
                 {
-                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 1f);
+                    donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z), Time.deltaTime * 2f);
                 }
-
                 if (donecekObje1.transform.rotation == Quaternion.Euler(-180, -90, 0) && donecekObje1.transform.position == new Vector3(donecekObje1.transform.position.x, 0, donecekObje1.transform.position.z))
                 {
                     donecek1 = false;
@@ -290,14 +322,14 @@ public class OyunIki : MonoBehaviour
 
             if (donecek2 == true && eskiyeDon == false)
             {
-                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 2.5f);
+                donecekObje2.transform.rotation = Quaternion.Lerp(donecekObje2.transform.rotation, Quaternion.Euler(180, -90, 0), Time.deltaTime * 5f);
                 if (donecekObje2.transform.rotation.z > Quaternion.Euler(-130, -90, 0).z)
                 {
-                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 10f);
+                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 1, donecekObje2.transform.position.z), Time.deltaTime * 14f);
                 }
                 else
                 {
-                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 1f);
+                    donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z), Time.deltaTime * 2f);
                 }
                 if (donecekObje2.transform.rotation == Quaternion.Euler(-180, -90, 0) && donecekObje2.transform.position == new Vector3(donecekObje2.transform.position.x, 0, donecekObje2.transform.position.z))
                 {
@@ -325,17 +357,18 @@ public class OyunIki : MonoBehaviour
                         {
                             if (donecekObje1.transform.position.x <= (transforms[i].position.x - donecekObje1.transform.position.x) / 2 || donecekObje2.transform.position.x <= (transforms[i].position.x - donecekObje2.transform.position.x) / 2)
                             {
-                                donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(transforms[i].position.x, 4, transforms[i].position.z), Time.deltaTime * 5f);
-                                donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(transforms[i].position.x, 4, transforms[i].position.z), Time.deltaTime * 5f);
+                                donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(transforms[i].position.x, 4, transforms[i].position.z), Time.deltaTime * 15f);
+                                donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(transforms[i].position.x, 4, transforms[i].position.z), Time.deltaTime * 15f);
                             }
                             else
                             {
-                                donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(transforms[i].position.x, 0, transforms[i].position.z), Time.deltaTime * 5f);
-                                donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(transforms[i].position.x, 0, transforms[i].position.z), Time.deltaTime * 5f);
+                                donecekObje1.transform.position = Vector3.MoveTowards(donecekObje1.transform.position, new Vector3(transforms[i].position.x, 0, transforms[i].position.z), Time.deltaTime * 15f);
+                                donecekObje2.transform.position = Vector3.MoveTowards(donecekObje2.transform.position, new Vector3(transforms[i].position.x, 0, transforms[i].position.z), Time.deltaTime * 15f);
                             }
                         }
                         else
                         {
+                            ZamaniSifirla = true;
                             Destroy(donecekObje2);
                             donecekObje1.name = "Bilgi" + Control[0].Substring(6, Control[0].Length - 6);
 
@@ -354,7 +387,6 @@ public class OyunIki : MonoBehaviour
                                     bilgiler.Add(bilgis);
                                 }
                             }
-
                             Control[0] = null;
                             Control[1] = null;
                             kacDogruOldu++;
@@ -372,6 +404,10 @@ public class OyunIki : MonoBehaviour
     }
     public void GeriButton()
     {
+        if (clickObject.GetComponent<Click>() != null)
+        {
+            clickControl.SelectedObject = null;
+        }
         canvas.SetActive(false);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,10 +44,7 @@ public class OyunBir : MonoBehaviour
 
     int BaslangicIndis;
     #endregion
-
-    public Camera camera;
-    public GameObject Masa;
-    ClickControl clickControl;
+    Click clickControl;
 
     public GameObject clickObject;
     public Material material1;
@@ -58,7 +56,7 @@ public class OyunBir : MonoBehaviour
     public GameObject kelimelerEasyCanvas;
     public GameObject kelimelerNormalCanvas;
     public GameObject kelimelerHardCanvas;
-    GameObject[] Control;
+    public GameObject[] Control;
     int cardX;
     int cardZ;
     bool seciliyor = false;
@@ -85,8 +83,30 @@ public class OyunBir : MonoBehaviour
 
     public bool DogruMuzikCal = false;
     public bool YanlisMuzikCal = false;
+
+    #region puan elemanlarý
+    public GameObject DuraklatMenu;
+    public GameObject TimeObjectGenelZaman;
+    public GameObject TimeObjectSoruBasinaZaman;
+    public GameObject PointObject;
+    Text GenelZamanObject;
+    Text SoruBasinaZamanObject;
+    Text PointObjectText;
+    int Points = 0;
+    float GenelZaman = 0;
+    float SoruBasinaZaman = 10;
+    int SoruBasinaZamanYedek = 10;
+    int KelimeBasinaPuan = 100;
+    int SaniyeBasinaPuan = 10;
+    bool ZamaniSifirla = false;
+    bool PuanVerildi = false;
+    #endregion
     void Start()
     {
+        PointObjectText = PointObject.GetComponent<Text>();
+        GenelZamanObject = TimeObjectGenelZaman.GetComponent<Text>();
+        SoruBasinaZamanObject = TimeObjectSoruBasinaZaman.GetComponent<Text>();
+        KelimeSayisi = PlayerPrefs.GetInt("OyunBirZorluk");
         EskiHalineDönecekler = new List<GameObject>();
         bilinenler = new List<string>();
         musicalInstruments = new List<string>();
@@ -99,7 +119,6 @@ public class OyunBir : MonoBehaviour
         musicalInstruments.Add("NEY");
         musicalInstruments.Add("TAR");
         musicalInstruments.Add("UD");
-        musicalInstruments.Add("ELEKTROGÝTAR");
         musicalInstruments.Add("GÝTAR");
         musicalInstruments.Add("CÜMBÜÞ");
         musicalInstruments.Add("MANDOLÝN");
@@ -135,6 +154,7 @@ public class OyunBir : MonoBehaviour
         musicalInstruments.Add("KORNO");
         musicalInstruments.Add("BANDONEON");
         #endregion
+        string[] harfler = {"A","B","C","Ç","D","E","F","G","Ð","H","I","Ý","J","K","L","M","N","O","Ö","P","R","S","Þ","T","U","Ü","V","Y","Z","X"};
 
         #region kelimeleri yerleþtiriyoruz
         KelimeYerleri = new List<GameObject>();
@@ -156,11 +176,22 @@ public class OyunBir : MonoBehaviour
             }
         } while (yerlesenKelimeler.Count != KelimeSayisi);
         DiziBuyuklugu = DiziBuyukluguYedek;
+        System.Random rnd = new System.Random();
         for (int i = 0; i < DiziBuyuklugu; i++)
         {
             for (int j = 0; j < DiziBuyuklugu; j++)
             {
-                GameObject.Find("Kart_" + (j + 1) + "_" + (i + 1)).transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = KelimeDizisi[i, j];
+                if (KelimeDizisi[i,j] == null)
+                {
+                    //System.Random rnd = new System.Random();
+                    int randHarf = rnd.Next(30);
+                    //var randHarf = new System.Random().Next(harfler.Length);
+                    GameObject.Find("Kart_" + (j + 1) + "_" + (i + 1)).transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = harfler[randHarf];
+                }
+                else
+                {
+                    GameObject.Find("Kart_" + (j + 1) + "_" + (i + 1)).transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = KelimeDizisi[i, j];
+                }
             }
         }
         for (int i = 0; i < yerlesenKelimeler.Count; i++)
@@ -169,23 +200,20 @@ public class OyunBir : MonoBehaviour
         }
         #endregion
     }
-    void Update()
+    private void Update()
     {
-        if (bilinensayisi < KelimeSayisi)
+        if (oyunKazanildi == false)
         {
-            if (clickObject.GetComponent<ClickControl>() != null)
+            if (clickObject.GetComponent<Click>() != null)
             {
-                clickControl = clickObject.GetComponent<ClickControl>();
+                clickControl = clickObject.GetComponent<Click>();
             }
-
-            Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hitInfo;
-            if (Physics.Raycast(ray, out hitInfo))
+            if (Input.GetMouseButtonDown(0) && clickControl.SelectedObject != null)
             {
-                if (Input.GetMouseButtonDown(0) && hitInfo.transform.gameObject.name.Contains("Kart"))
+                if (bilinensayisi < KelimeSayisi && clickControl.SelectedObject.name.Contains("Kart"))
                 {
                     SecilenKelime = new List<GameObject>();
-                    Control[0] = hitInfo.transform.gameObject;
+                    Control[0] = clickControl.SelectedObject;
                     if (Control[0].name.Length == 8)
                     {
                         cardX = Convert.ToInt32(Control[0].name.Substring(5, 1));
@@ -210,33 +238,36 @@ public class OyunBir : MonoBehaviour
                         cardZ = Convert.ToInt32(Control[0].name.Substring(8, 2));
                     }
                 }
-                if (Input.GetMouseButton(0))
+            }
+            if (Input.GetMouseButton(0))
+            {
+                if (bilinensayisi < KelimeSayisi)
                 {
-                    if (hitInfo.transform.gameObject != Control[0])
+                    if (clickControl.SelectedObject != null && clickControl.SelectedObject != Control[0] && clickControl.SelectedObject.name.Contains("Kart"))
                     {
-                        if (hitInfo.transform.gameObject != null && hitInfo.transform.gameObject.transform.position.z == Control[0].transform.position.z)
+                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.position.z == Control[0].transform.position.z)
                         {
                             yonler = Yonler.Yatay;
                             SecilenKelime.Add(Control[0]);
                         }
-                        if (hitInfo.transform.gameObject != null && hitInfo.transform.gameObject.transform.position.x == Control[0].transform.position.x)
+                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.position.x == Control[0].transform.position.x)
                         {
                             yonler = Yonler.Dikey;
                             SecilenKelime.Add(Control[0]);
                         }
-                        if (hitInfo.transform.gameObject != null && Math.Abs(hitInfo.transform.gameObject.transform.position.z - Control[0].transform.position.z) == Math.Abs(hitInfo.transform.gameObject.transform.position.x - Control[0].transform.position.x))
+                        if (clickControl.SelectedObject != null && Math.Abs(clickControl.SelectedObject.transform.position.z - Control[0].transform.position.z) == Math.Abs(clickControl.SelectedObject.transform.position.x - Control[0].transform.position.x))
                         {
                             yonler = Yonler.Capraz;
                             SecilenKelime.Add(Control[0]);
                         }
                         yonAtandi = true;
                     }
-                    if (yonAtandi == true)
+                    if (yonAtandi == true && clickControl.SelectedObject.name.Contains("Kart"))
                     {
                         if (yonler == Yonler.Yatay)
                         {
                             RaycastHit hitInfoNew;
-                            Vector3 position = new Vector3(hitInfo.transform.position.x, Control[0].transform.position.y, Control[0].transform.position.z - 1);
+                            Vector3 position = new Vector3(clickControl.SelectedObject.transform.position.x, Control[0].transform.position.y, Control[0].transform.position.z - 1);
                             if (Physics.Raycast(position, transform.TransformDirection(Vector3.forward), out hitInfoNew))
                             {
                                 SecilenKelime.Add(hitInfoNew.transform.gameObject);
@@ -245,7 +276,7 @@ public class OyunBir : MonoBehaviour
                         if (yonler == Yonler.Dikey)
                         {
                             RaycastHit hitInfoNew;
-                            Vector3 position = new Vector3(Control[0].transform.position.x, Control[0].transform.position.y, hitInfo.transform.position.z - 1);
+                            Vector3 position = new Vector3(Control[0].transform.position.x, Control[0].transform.position.y, clickControl.SelectedObject.transform.position.z - 1);
                             if (Physics.Raycast(position, transform.TransformDirection(Vector3.forward), out hitInfoNew))
                             {
                                 SecilenKelime.Add(hitInfoNew.transform.gameObject);
@@ -254,7 +285,7 @@ public class OyunBir : MonoBehaviour
                         if (yonler == Yonler.Capraz)
                         {
                             RaycastHit hitInfoNew;
-                            Vector3 position = new Vector3(hitInfo.transform.position.x, Control[0].transform.position.y, hitInfo.transform.position.z - 1);
+                            Vector3 position = new Vector3(clickControl.SelectedObject.transform.position.x, Control[0].transform.position.y, clickControl.SelectedObject.transform.position.z - 1);
                             if (Physics.Raycast(position, transform.TransformDirection(Vector3.forward), out hitInfoNew))
                             {
                                 if (Math.Abs(Control[0].transform.position.x - hitInfoNew.transform.gameObject.transform.position.x) == Math.Abs(Control[0].transform.position.z - hitInfoNew.transform.gameObject.transform.position.z))
@@ -265,19 +296,55 @@ public class OyunBir : MonoBehaviour
                         }
                     }
                 }
-                if (Input.GetMouseButtonUp(0) && hitInfo.transform.gameObject.name.Contains("Kart"))
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (clickControl.SelectedObject != null && bilinensayisi < KelimeSayisi && clickControl.SelectedObject.name.Contains("Kart"))
                 {
-                    Control[1] = hitInfo.transform.gameObject;
+                    Control[1] = clickControl.SelectedObject.transform.gameObject;
                     ensturman = null;
                     kelimeHarfleri = new List<GameObject>();
                     KontrolEtme(Control, kelimeHarfleri);
                     yonAtandi = false;
                 }
             }
-        }
-        if (bilinensayisi == KelimeSayisi)
-        {
-            oyunKazanildi = true;
+            #region zaman Ve Puan Kodlarý
+            if (DuraklatMenu.activeSelf == false && bilinensayisi != KelimeSayisi)
+            {
+                GenelZaman += Time.deltaTime;
+                GenelZamanObject.text = "" + (int)GenelZaman;
+            }
+            if (DuraklatMenu.activeSelf == false && SoruBasinaZaman > 0 && bilinensayisi != KelimeSayisi)
+            {
+                SoruBasinaZaman -= Time.deltaTime;
+                SoruBasinaZamanObject.text = "" + (int)SoruBasinaZaman;
+            }
+            if (SoruBasinaZaman <= 0 && SoruBasinaZamanObject.color != Color.red)
+            {
+                SoruBasinaZamanObject.text = "0";
+                SoruBasinaZamanObject.color = Color.red;
+            }
+            if (ZamaniSifirla == true)
+            {
+                Points += (int)SoruBasinaZaman * SaniyeBasinaPuan;
+                SoruBasinaZaman = SoruBasinaZamanYedek;
+                SoruBasinaZamanObject.color = Color.white;
+                ZamaniSifirla = false;
+            }
+            if (bilinensayisi == KelimeSayisi && PuanVerildi == false)
+            {
+                Points -= (int)GenelZaman * SaniyeBasinaPuan;
+                Points += KelimeSayisi * KelimeBasinaPuan;
+                if (Points <= 0)
+                {
+                    Points = 0;
+                }
+                PuanVerildi = true;
+                oyunKazanildi = true;
+                PlayerPrefs.SetInt("Puan", Points);
+            }
+            PointObjectText.text = "" + Points;
+            #endregion
         }
     }
     public void KontrolEtme(GameObject[] Control, List<GameObject> kelimeHarfleri)
@@ -353,11 +420,12 @@ public class OyunBir : MonoBehaviour
             if (item == ensturman)
             {
                 ensturmanVar = true;
+                ZamaniSifirla = true;
                 bilinenler.Add(item);
                 bilinensayisi++;
                 foreach (var item2 in kelimeHarfleri)
                 {
-                    item2.transform.GetChild(7).gameObject.SetActive(true);
+                    item2.transform.GetChild(1).gameObject.SetActive(true);
                 }
                 foreach (var item2 in KelimeYerleri)
                 {
@@ -412,7 +480,6 @@ public class OyunBir : MonoBehaviour
         CardYedekX = cardX;
         CardYedekZ = cardZ;
     }
-
     #region kelimeleri yerleþtirme kodlarý
     public void kartlariGetir(int KelimeSayisi)
     {
@@ -429,9 +496,7 @@ public class OyunBir : MonoBehaviour
             KelimeDizisi = new string[10, 10];
             DiziBuyuklugu = 10;
             DiziBuyukluguYedek = 10;
-            Masa.transform.position = new Vector3(12.2f, -0.74f, -7.3f);
-            Masa.transform.localScale = new Vector3(1, 0.3f, 1);
-            camera.transform.position = new Vector3(12.1f, 18.2f, -13.3f);
+            //camera.transform.position = easyCamStartPos;
             kelimelerEasyCanvas.SetActive(true);
             for (int i = 0; i < KelimeSayisi; i++)
             {
@@ -452,9 +517,7 @@ public class OyunBir : MonoBehaviour
             KelimeDizisi = new string[KelimeSayisi, KelimeSayisi];
             DiziBuyuklugu = KelimeSayisi;
             DiziBuyukluguYedek = KelimeSayisi;
-            Masa.transform.position = new Vector3(19.02f, 0.24f, -11.17f);
-            Masa.transform.localScale = new Vector3(1.242f, 0.3f, 1.242f);
-            camera.transform.position = new Vector3(18.74f, 23.99f, -20.51f);
+            //camera.transform.position = mediumCamStartPos;
             kelimelerNormalCanvas.SetActive(true);
             for (int i = 0; i < KelimeSayisi; i++)
             {
@@ -475,9 +538,7 @@ public class OyunBir : MonoBehaviour
             KelimeDizisi = new string[15, 15];
             DiziBuyuklugu = 15;
             DiziBuyukluguYedek = 15;
-            Masa.transform.position = new Vector3(18.5f, 0.19f, -11.7f);
-            Masa.transform.localScale = new Vector3(1.25f, 0.3f, 1.25f);
-            camera.transform.position = new Vector3(18.74f, 23.99f, -20.51f);
+            //camera.transform.position = hardCamStartPos;
             kelimelerHardCanvas.SetActive(true);
             for (int i = 0; i < KelimeSayisi; i++)
             {

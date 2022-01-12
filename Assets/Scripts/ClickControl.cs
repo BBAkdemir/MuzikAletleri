@@ -1,58 +1,102 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class ClickControl : MonoBehaviour
+public class ClickControl : MonoBehaviour, IPointerDownHandler, IPointerClickHandler, IPointerUpHandler, IPointerMoveHandler
 {
-    public GameObject SelectedObject;
-    public Camera camera;
+    Click click;
 
+    OyunBes oyunBes;
+    public GameObject OyunBesObject;
     OyunIki oyunIki;
     public GameObject OyunIkiObject;
+    OyunBir oyunBir;
+    public GameObject OyunBirObject;
     void Start()
     {
+        OyunBesObject = GameObject.Find("OyunBes");
+        OyunIkiObject = GameObject.Find("OyunIki");
+        OyunBirObject = GameObject.Find("OyunBir");
+        if (OyunBirObject != null)
+        {
+            oyunBir = OyunBirObject.GetComponent<OyunBir>();
+        }
         if (OyunIkiObject != null)
         {
             oyunIki = OyunIkiObject.GetComponent<OyunIki>();
         }
-        SelectedObject = null;
+        if (OyunBesObject != null)
+        {
+            oyunBes = OyunBesObject.GetComponent<OyunBes>();
+        }
+        click = GameObject.Find("Sounds").GetComponent<Click>();
+        click.SelectedObject = null;
     }
     void SelectObject(GameObject selected)
     {
-        if (SelectedObject != null)
+        if (click.SelectedObject != null)
         {
-            if (selected == SelectedObject)
+            if (selected == click.SelectedObject)
             {
                 return;
             }
             ClearSelection();
         }
-        SelectedObject = selected;
+        click.SelectedObject = selected;
+
     }
     void ClearSelection()
     {
-        if (SelectedObject == null)
+        if (click.SelectedObject == null)
         {
             return;
         }
-        SelectedObject = null;
+        click.SelectedObject = null;
     }
-    void Update()
-    {
-        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitInfo;
 
-        if (Physics.Raycast(ray, out hitInfo))
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (oyunBir == null && eventData.eligibleForClick && Input.touchCount < 2)
         {
-            GameObject hitObject = hitInfo.transform.gameObject;
-            if (Input.GetMouseButtonDown(0))
-            {
-                SelectObject(hitObject);
-            }
-            else if (oyunIki != null && oyunIki.OyunIkiActive == true)
-            {
-                ClearSelection();
-            }
+            SelectObject(eventData.pointerPress);
+        }
+        //if (oyunBir == null && oyunIki != null && oyunIki.OyunIkiActive == true)
+        //{
+        //    ClearSelection();
+        //}
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.eligibleForClick && (oyunBir != null || oyunBes != null) && oyunIki == null && !eventData.pointerEnter.gameObject.name.Contains("Button") && Input.touchCount < 2)
+        {
+            SelectObject(eventData.pointerEnter);
+        }
+        if (eventData.eligibleForClick && (oyunIki != null || oyunBir != null || oyunBes != null) && eventData.pointerEnter.gameObject.name.Contains("Button") && Input.touchCount < 2)
+        {
+            click.MoveButtonDown = eventData.pointerEnter;
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.eligibleForClick && (oyunBir != null || oyunBes != null) && oyunIki == null && !eventData.pointerEnter.gameObject.name.Contains("Button") && Input.touchCount < 2)
+        {
+            SelectObject(eventData.pointerEnter);
+        }
+        if (eventData.eligibleForClick && (oyunIki != null || oyunBir != null || oyunBes != null) && eventData.pointerEnter.gameObject.name.Contains("Button") && Input.touchCount < 2)
+        {
+            click.MoveButtonDown = null;
+        }
+    }
+
+    public void OnPointerMove(PointerEventData eventData)
+    {
+        if (oyunBes != null && Input.touchCount < 2)
+        {
+            click.MouseDownPosition = eventData.pointerCurrentRaycast.worldPosition;
         }
     }
 }

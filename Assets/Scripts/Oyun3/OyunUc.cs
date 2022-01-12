@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class OyunUc : MonoBehaviour
 {
-    public ClickControl clickControl;
+    public Click clickControl;
     public GameObject clickObject;
 
     public List<string> musicalInstruments;
@@ -35,6 +35,7 @@ public class OyunUc : MonoBehaviour
     public string Question = "";
     int sayi = 0;
 
+    bool yanlis = false;
     public bool trueMi = false;
     public bool falseMi = false;
     public bool birdahakiSoruyaGec = true;
@@ -42,8 +43,37 @@ public class OyunUc : MonoBehaviour
     public bool oyunKaybedildi = false;
     public bool oyunKazanildi = false;
     public bool sonrakineGecButton = false;
+
+    #region zaman Deðiþkenleri
+    public GameObject DuraklatMenu;
+    public GameObject TimeObjectSoruBasinaZaman;
+    public GameObject ScoreObject;
+    Text SoruBasinaZamanObject;
+    Text ScoreObjectText;
+    int Scores = 0;
+    float SoruBasinaZaman = 0;
+    int SoruBasinaZamanYedek = 0;
+    int KartBasinaPuan = 100;
+    int SaniyeBasinaPuan = 10;
+    bool ZamaniSifirla = false;
+    bool zamaniDurdur = false;
+    #endregion
     void Start()
     {
+        if (PlayerPrefs.GetString("OyunUcZorluk") == "Kolay")
+        {
+            difficulty = Difficulty.Easy;
+        }
+        if (PlayerPrefs.GetString("OyunUcZorluk") == "Orta")
+        {
+            difficulty = Difficulty.Normal;
+        }
+        if (PlayerPrefs.GetString("OyunUcZorluk") == "Zor")
+        {
+            difficulty = Difficulty.Hard;
+        }
+        SoruBasinaZamanObject = TimeObjectSoruBasinaZaman.GetComponent<Text>();
+        ScoreObjectText = ScoreObject.GetComponent<Text>();
         musicalInstruments = new List<string>();
         options = new List<OptionCards>();
         musicalInstruments.Add("Balaban");
@@ -234,10 +264,43 @@ public class OyunUc : MonoBehaviour
     }
     void Update()
     {
+        if (DuraklatMenu.activeSelf == false && oyunKazanildi == false && ZamaniSifirla == false && zamaniDurdur == false)
+        {
+            SoruBasinaZaman += Time.deltaTime;
+            SoruBasinaZamanObject.text = "" + (int)SoruBasinaZaman;
+        }
+        if (ZamaniSifirla == true && yanlis == false)
+        {
+            Scores += KartBasinaPuan - ((int)SoruBasinaZaman * SaniyeBasinaPuan);
+            SoruBasinaZaman = SoruBasinaZamanYedek;
+            ZamaniSifirla = false;
+            ScoreObjectText.text = "" + Scores;
+            PlayerPrefs.SetInt("Puan", Scores);
+        }
+        if (ZamaniSifirla == true && yanlis == true)
+        {
+            Scores -= KartBasinaPuan - ((int)SoruBasinaZaman * SaniyeBasinaPuan);
+            SoruBasinaZaman = SoruBasinaZamanYedek;
+            ZamaniSifirla = false;
+            yanlis = false;
+            ScoreObjectText.text = "" + Scores;
+            PlayerPrefs.SetInt("Puan", Scores);
+        }
+        if (oyunKazanildi == true)
+        {
+            if (Scores <= 0)
+            {
+                Scores = 0;
+            }
+            PlayerPrefs.SetInt("Puan", Scores);
+        }
+
         if (cevaplananYanlisSoruSayisi < yanlisBilmeHakki)
         {
             if (sonrakineGecButton == false)
             {
+                ZamaniSifirla = false;
+                zamaniDurdur = false;
                 if (cevaplananSoruSayisi < 41 && sayi < options.Count() - 1)
                 {
                     CardQuestion();
@@ -264,25 +327,37 @@ public class OyunUc : MonoBehaviour
 
                     for (int i = 0; i < options.Count; i++)
                     {
-                        GameObject.Find("SecenekCard" + i).transform.GetChild(6).transform.GetChild(0).GetComponent<Text>().text = options[i].Instrument;
+                        GameObject.Find("SecenekCard" + i).transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text = options[i].Instrument;
                     }
                 }
 
-                if (clickObject.GetComponent<ClickControl>() != null)
+                if (clickObject.GetComponent<Click>() != null)
                 {
-                    clickControl = clickObject.GetComponent<ClickControl>();
+                    clickControl = clickObject.GetComponent<Click>();
                 }
-                var yanlis = false;
+                yanlis = false;
                 if (clickControl.SelectedObject != null && clickControl.SelectedObject.name.Contains("Secenek"))
                 {
                     foreach (var item in options)
                     {
-                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(6).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
+                        if (clickControl.SelectedObject != null && clickControl.SelectedObject.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name /*item.Id == Convert.ToInt32(clickControl.SelectedObject.name.Substring(11, 1)) && item.Id == trueOption*/)
                         {
+                            foreach (var item1 in options)
+                            {
+                                if (item1.Card.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text != soruCardImage.GetComponent<Image>().sprite.name)
+                                {
+                                    item1.Card.transform.GetChild(3).gameObject.SetActive(true);
+                                }
+                                if (item1.Card.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name)
+                                {
+                                    item1.Card.transform.GetChild(4).gameObject.SetActive(true);
+                                }
+                            }
                             sayi = 0;
                             cevaplananDogruSoruSayisi++;
                             yanlis = false;
                             trueMi = true;
+                            ZamaniSifirla = true;
                             sonrakineGecButton = true;
                             clickControl.SelectedObject = null;
                             break;
@@ -294,12 +369,23 @@ public class OyunUc : MonoBehaviour
                     }
                     if (yanlis == true)
                     {
+                        foreach (var item1 in options)
+                        {
+                            if (item1.Card.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text != soruCardImage.GetComponent<Image>().sprite.name)
+                            {
+                                item1.Card.transform.GetChild(3).gameObject.SetActive(true);
+                            }
+                            if (item1.Card.transform.GetChild(0).transform.GetChild(0).GetComponent<Text>().text == soruCardImage.GetComponent<Image>().sprite.name)
+                            {
+                                item1.Card.transform.GetChild(4).gameObject.SetActive(true);
+                            }
+                        }
                         falseMi = true;
                         sayi = 0;
+                        ZamaniSifirla = true;
                         cevaplananYanlisSoruSayisi++;
-                        YanlisSayisiCanvas.transform.GetChild(0).GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
+                        YanlisSayisiCanvas.transform.GetChild(0).GetComponent<Text>().text = "Yanlýþ Sayýsý " + cevaplananYanlisSoruSayisi + "/" + yanlisBilmeHakki;
                         sonrakineGecButton = true;
-                        yanlis = false;
                         clickControl.SelectedObject = null;
                     }
                     cevaplananSoruSayisi++;
@@ -307,11 +393,12 @@ public class OyunUc : MonoBehaviour
             }
             else
             {
-                if (clickObject.GetComponent<ClickControl>() != null)
+                if (clickObject.GetComponent<Click>() != null)
                 {
-                    clickControl = clickObject.GetComponent<ClickControl>();
+                    clickControl = clickObject.GetComponent<Click>();
                     clickControl.SelectedObject = null;
                 }
+                zamaniDurdur = true;
             }
         }
         else

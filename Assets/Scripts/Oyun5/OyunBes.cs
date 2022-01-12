@@ -2,18 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using TMPro;
 using UnityEngine.UI;
 
 public class OyunBes : MonoBehaviour
 {
     public Camera camera;
 
-    public GameObject Masa;
-
     public float time;
     public Text timeText;
 
-    ClickControl clickControl;
+    Click clickControl;
     LineRenderer lineRenderer;
 
     public GameObject clickObject;
@@ -54,8 +53,17 @@ public class OyunBes : MonoBehaviour
 
     public int KacDogruOlmali;
     public int KacDogruOldu = 0;
+    public int Score = 0;
     void Start()
     {
+        if (PlayerPrefs.GetString("OyunBesZorluk") == "Kolay")
+        {
+            difficulty = Difficulty.Easy;
+        }
+        if (PlayerPrefs.GetString("OyunBesZorluk") == "Orta")
+        {
+            difficulty = Difficulty.Normal;
+        }
         time = 0;
         Cikanlar = new List<string>();
         lineRenderers = new List<LineRenderers>();
@@ -67,7 +75,6 @@ public class OyunBes : MonoBehaviour
         musicalInstruments.Add("Ney");
         musicalInstruments.Add("Tar");
         musicalInstruments.Add("Ud");
-        musicalInstruments.Add("Elektro Gitar");
         musicalInstruments.Add("Gitar");
         musicalInstruments.Add("Cümbüþ");
         musicalInstruments.Add("Mandolin");
@@ -110,16 +117,14 @@ public class OyunBes : MonoBehaviour
         if (difficulty == Difficulty.Normal)
         {
             CardMaker(10);
-            Masa.transform.position = new Vector3(0, -0.65f, 0.71f);
-            Masa.transform.localScale = new Vector3(0.396002f, 0.3f, 0.396002f);
         }
-        if (difficulty == Difficulty.Hard)
-        {
-            CardMaker(14);
-            Masa.transform.position = new Vector3(0, -0.65f, 0.71f);
-            Masa.transform.localScale = new Vector3(0.5491556f, 0.3f, 0.5491556f);
-        }
-        
+        //if (difficulty == Difficulty.Hard)
+        //{
+        //    CardMaker(14);
+        //    Masa.transform.position = new Vector3(0, -0.65f, 0.71f);
+        //    Masa.transform.localScale = new Vector3(0.5491556f, 0.3f, 0.5491556f);
+        //}
+
     }
 
     public void CardMaker(int HowManyOption)
@@ -244,7 +249,7 @@ public class OyunBes : MonoBehaviour
 
         foreach (var item in CardIsims)
         {
-            item.Card.transform.GetChild(6).GetChild(0).gameObject.GetComponent<Text>().text = item.Instrument;
+            item.Card.transform.GetChild(0).GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Instrument;
         }
         foreach (var item in CardResims)
         {
@@ -252,7 +257,7 @@ public class OyunBes : MonoBehaviour
             {
                 if (item1.name.Equals(item.Instrument))
                 {
-                    item.Card.transform.GetChild(6).GetChild(0).gameObject.GetComponent<Image>().sprite = item1;
+                    item.Card.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Image>().sprite = item1;
                     break;
                 }
             }
@@ -260,11 +265,14 @@ public class OyunBes : MonoBehaviour
     }
     void Update()
     {
-        time += Time.deltaTime;
-        timeText.text = "" + (int)time;
-        if (clickObject.GetComponent<ClickControl>() != null)
+        if (KacDogruOlmali != KacDogruOldu)
         {
-            clickControl = clickObject.GetComponent<ClickControl>();
+            time += Time.deltaTime;
+            timeText.text = "" + (int)time;
+        }
+        if (clickObject.GetComponent<Click>() != null)
+        {
+            clickControl = clickObject.GetComponent<Click>();
             if (birinciNoktaVerildi == false && ikinciNoktaVerildi == true && clickControl.SelectedObject != null && clickControl.SelectedObject.transform.gameObject.name.Contains("Card"))
             {
                 foreach (var item in lineRenderers)
@@ -284,7 +292,7 @@ public class OyunBes : MonoBehaviour
                     newLineRendererObject = Instantiate(LineRendererObject, clickControl.SelectedObject.transform.position, new Quaternion(0, 0, 0, 0));
 
                     newLineRendererObject.name = "LineRendererObject" + lineRenderers.Count;
-                    newLineRendererObject.GetComponent<LineRenderer>().SetPosition(0, clickControl.SelectedObject.transform.GetChild(7).position);
+                    newLineRendererObject.GetComponent<LineRenderer>().SetPosition(0, clickControl.SelectedObject.transform.GetChild(1).position);
                     lineRenderersClass = new LineRenderers()
                     {
                         LineRenderer = newLineRendererObject,
@@ -319,99 +327,120 @@ public class OyunBes : MonoBehaviour
                 }
             }
         }
-
-        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitInfo;
-        if (Physics.Raycast(ray, out hitInfo))
+        if (newLineRendererObject != null && ikinciNoktaVerildi == false && birinciNoktaVerildi == true && KacDogruOldu != KacDogruOlmali)
         {
-            if (newLineRendererObject != null && ikinciNoktaVerildi == false && birinciNoktaVerildi == true && KacDogruOldu != KacDogruOlmali)
+            newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, clickControl.MouseDownPosition);
+            if (Input.GetMouseButtonUp(0) && !clickControl.SelectedObject.name.Contains("Card"))
             {
-                newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, hitInfo.point);
-                if (!hitInfo.transform.gameObject.name.Contains("Card") && Input.GetMouseButtonDown(0))
+                Destroy(newLineRendererObject);
+                lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
+                clickControl.SelectedObject = null;
+                birinciNoktaVerildi = false;
+                ikinciNoktaVerildi = true;
+            }
+            if (Input.GetMouseButtonUp(0) && clickControl.SelectedObject.name.Contains("Card") && clickControl.SelectedObject != null)
+            {
+                foreach (var item in lineRenderers)
+                {
+                    if (item.CardOne == clickControl.SelectedObject || item.CardTwo == clickControl.SelectedObject)
+                    {
+                        dahaOnceSecilmismi = true;
+                        break;
+                    }
+                    else
+                    {
+                        dahaOnceSecilmismi = false;
+                    }
+                }
+                if ((SecilenCardIsim == true && clickControl.SelectedObject.name.Contains("Resim") && dahaOnceSecilmismi == false) || (SecilenCardResim == true && clickControl.SelectedObject.name.Contains("Isim") && dahaOnceSecilmismi == false))
+                {
+                    newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, clickControl.SelectedObject.transform.GetChild(1).position);
+                    lineRenderers[lineRenderers.IndexOf(lineRenderersClass)].CardTwo = clickControl.SelectedObject;
+                    ikinciNoktaVerildi = true;
+                    if (SecilenCardResim == true)
+                    {
+                        foreach (var item in CardIsims)
+                        {
+                            if (item.Card == clickControl.SelectedObject)
+                            {
+                                Control[1] = item.Instrument;
+                                break;
+                            }
+                        }
+                    }
+                    if (SecilenCardIsim == true)
+                    {
+                        foreach (var item in CardResims)
+                        {
+                            if (item.Card == clickControl.SelectedObject)
+                            {
+                                Control[1] = item.Instrument;
+                                break;
+                            }
+                        }
+                    }
+                    if (Control[0] != null && Control[1] != null && Control[0] != Control[1])
+                    {
+                        YanlisMuzikCal = true;
+                        Destroy(newLineRendererObject);
+                        lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
+                        ikinciNoktaVerildi = true;
+                        Control[0] = null;
+                        Control[1] = null;
+                        if (difficulty == Difficulty.Easy)
+                        {
+                            time += 7;
+                        }
+                        if (difficulty == Difficulty.Normal)
+                        {
+                            time += 5;
+                        }
+                        if (difficulty == Difficulty.Hard)
+                        {
+                            time += 3;
+                        }
+
+                    }
+                    if (Control[0] != null && Control[1] != null && Control[0] == Control[1])
+                    {
+                        CalacakMuzikAleti = Control[0];
+                        MuzikCal = true;
+                        KacDogruOldu++;
+                    }
+                    clickControl.SelectedObject = null;
+                    birinciNoktaVerildi = false;
+                    Control[0] = null;
+                    Control[1] = null;
+                }
+                else
                 {
                     Destroy(newLineRendererObject);
                     lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
                     clickControl.SelectedObject = null;
                     birinciNoktaVerildi = false;
                     ikinciNoktaVerildi = true;
-                }
-                if (hitInfo.transform.gameObject.name.Contains("Card") && Input.GetMouseButtonDown(0) && clickControl.SelectedObject != null)
-                {
-                    foreach (var item in lineRenderers)
-                    {
-                        if (item.CardOne == clickControl.SelectedObject || item.CardTwo == clickControl.SelectedObject)
-                        {
-                            dahaOnceSecilmismi = true;
-                            break;
-                        }
-                        else
-                        {
-                            dahaOnceSecilmismi = false;
-                        }
-                    }
-                    if ((SecilenCardIsim == true && clickControl.SelectedObject.name.Contains("Resim") && dahaOnceSecilmismi == false) || (SecilenCardResim == true && clickControl.SelectedObject.name.Contains("Isim") && dahaOnceSecilmismi == false))
-                    {
-                        newLineRendererObject.GetComponent<LineRenderer>().SetPosition(1, clickControl.SelectedObject.transform.GetChild(7).position);
-                        lineRenderers[lineRenderers.IndexOf(lineRenderersClass)].CardTwo = clickControl.SelectedObject;
-                        ikinciNoktaVerildi = true;
-                        if (SecilenCardResim == true)
-                        {
-                            foreach (var item in CardIsims)
-                            {
-                                if (item.Card == clickControl.SelectedObject)
-                                {
-                                    Control[1] = item.Instrument;
-                                    break;
-                                }
-                            }
-                        }
-                        if (SecilenCardIsim == true)
-                        {
-                            foreach (var item in CardResims)
-                            {
-                                if (item.Card == clickControl.SelectedObject)
-                                {
-                                    Control[1] = item.Instrument;
-                                    break;
-                                }
-                            }
-                        }
-                        if (Control[0] != null && Control[1] != null && Control[0] != Control[1])
-                        {
-                            YanlisMuzikCal = true;
-                            Destroy(newLineRendererObject);
-                            lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
-                            ikinciNoktaVerildi = true;
-                            Control[0] = null;
-                            Control[1] = null;
-                            time += 5;
-                        }
-                        if (Control[0] != null && Control[1] != null && Control[0] == Control[1])
-                        {
-                            CalacakMuzikAleti = Control[0];
-                            MuzikCal = true;
-                            KacDogruOldu++;
-                        }
-                        clickControl.SelectedObject = null;
-                        birinciNoktaVerildi = false;
-                        Control[0] = null;
-                        Control[1] = null;
-                    }
-                    else
-                    {
-                        Destroy(newLineRendererObject);
-                        lineRenderers.RemoveAt(lineRenderers.IndexOf(lineRenderersClass));
-                        clickControl.SelectedObject = null;
-                        birinciNoktaVerildi = false;
-                        ikinciNoktaVerildi = true;
-                        Control[0] = null;
-                    }
+                    Control[0] = null;
                 }
             }
-            if (KacDogruOldu == KacDogruOlmali)
+        }
+        if (KacDogruOldu == KacDogruOlmali)
+        {
+            if (difficulty == Difficulty.Easy)
             {
-                oyunKazanildi = true;
+                Score = (KacDogruOlmali * 100) - ((int)time * 4);
+                PlayerPrefs.SetInt("Puan", Score);
             }
+            if (difficulty == Difficulty.Normal)
+            {
+                Score = (KacDogruOlmali * 100) - ((int)time * 3);
+                PlayerPrefs.SetInt("Puan", Score);
+            }
+            //if (difficulty == Difficulty.Hard)
+            //{
+            //    Score = (KacDogruOlmali * 100) - ((int)time * 2);
+            //    PlayerPrefs.SetInt("Puan", Score);
+            //}
+            oyunKazanildi = true;
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ public class OyunAlti : MonoBehaviour
     public int DogruBilmeSayisiYedek;
     public Transform CardLetterStartPosition;
 
-    ClickControl clickControl;
+    Click clickControl;
     CarpmaKontrolu carpmaKontrolu;
     Menus menus;
 
@@ -47,12 +48,19 @@ public class OyunAlti : MonoBehaviour
 
     public GameObject YanlisBilmeHakkiText;
 
+    int harfSayisiYedek;
+    public int Score = 0;
+    public GameObject ScoreObject;
+    Text ScoreObjectText;
+
     void Start()
     {
+        YanlisBilmeHakki = PlayerPrefs.GetInt("OyunAltiZorluk");
         menus = Menus.GetComponent<Menus>();
         musicalInstruments = new List<string>();
         CardLetters = new List<LetterCards>();
-
+        selectedMusicalInstruments = new List<string>();
+        ScoreObjectText = ScoreObject.GetComponent<Text>();
         musicalInstruments.Add("Balaban");
         musicalInstruments.Add("Baðlama");
         musicalInstruments.Add("Kemençe");
@@ -104,7 +112,6 @@ public class OyunAlti : MonoBehaviour
     {
         var b = 0;
         letterCount = new List<char>();
-        selectedMusicalInstruments = new List<string>();
         do
         {
             var kelimeBul = new System.Random().Next(musicalInstruments.Count());
@@ -135,7 +142,7 @@ public class OyunAlti : MonoBehaviour
                 };
                 CardLetters.Add(letterCardsClass);
                 newCardLetter.name = "CardLetter" + CardInstrument[b];
-                newCardLetter.transform.GetChild(1).GetChild(0).GetComponent<Text>().text = "_";
+                newCardLetter.transform.GetChild(1).GetChild(0).GetComponent<TextMeshProUGUI>().text = "_";
             }
             b++;
         }
@@ -148,6 +155,7 @@ public class OyunAlti : MonoBehaviour
             }
         }
         bilindiMi = letterCount.Count;
+        harfSayisiYedek = letterCount.Count;
         yanlisBilmeHakkiYedek = YanlisBilmeHakki;
         kelimeSecildi = true;
     }
@@ -156,14 +164,14 @@ public class OyunAlti : MonoBehaviour
     {
         if ((menus.gameStop == false || DogruBilmeSayisiYedek < DogruBilmeSayisi) && yanlisBilmeHakkiYedek > 0)
         {
-            if (clickObject.GetComponent<ClickControl>().SelectedObject != null && kelimeSecildi == true && clickObject.GetComponent<ClickControl>().SelectedObject.name.Contains("CardIsim"))
+            if (clickObject.GetComponent<Click>().SelectedObject != null && kelimeSecildi == true && clickObject.GetComponent<Click>().SelectedObject.name.Contains("CardIsim"))
             {
-                clickControl = clickObject.GetComponent<ClickControl>();
+                clickControl = clickObject.GetComponent<Click>();
                 foreach (var item in CardLetters)
                 {
                     if (clickControl.SelectedObject != null && item.Letter.ToString().Equals(clickControl.SelectedObject.name.Substring(8, 1).ToString()))
                     {
-                        item.Card.transform.GetChild(1).GetChild(0).GetComponent<Text>().text = clickControl.SelectedObject.name.Substring(8, 1).ToString();
+                        item.Card.transform.GetChild(1).GetChild(0).GetComponent<TextMeshProUGUI>().text = clickControl.SelectedObject.name.Substring(8, 1).ToString();
                     }
                 }
                 if (cikanHarfler.Count == 0)
@@ -174,7 +182,7 @@ public class OyunAlti : MonoBehaviour
                 {
                     foreach (var item1 in cikanHarfler)
                     {
-                        if (clickControl.SelectedObject.name.Substring(8, 1).ToString() == item1.transform.GetChild(1).GetChild(0).GetComponent<Text>().text)
+                        if (clickControl.SelectedObject.name.Substring(8, 1).ToString() == item1.transform.GetChild(1).GetChild(0).GetComponent<TextMeshProUGUI>().text)
                         {
                             dahaOnceCikti = true;
                             break;
@@ -238,6 +246,20 @@ public class OyunAlti : MonoBehaviour
                 if (bilindiMi == 0 && yanlisBilmeHakkiYedek != 0)
                 {
                     DogruBilmeSayisiYedek++;
+                    if (YanlisBilmeHakki == 3)
+                    {
+                        Score += (harfSayisiYedek * 100) - ((YanlisBilmeHakki - yanlisBilmeHakkiYedek) * 10);
+                    }
+                    if (YanlisBilmeHakki == 6)
+                    {
+                        Score += (harfSayisiYedek * 100) - ((YanlisBilmeHakki - yanlisBilmeHakkiYedek) * 30);
+                    }
+                    if (YanlisBilmeHakki == 9)
+                    {
+                        Score += (harfSayisiYedek * 100) - ((YanlisBilmeHakki - yanlisBilmeHakkiYedek) * 50);
+                    }
+                    ScoreObjectText.text = "" + Score;
+                    PlayerPrefs.SetInt("Puan", Score);
                     MuzikCalsin = true;
                     if (DogruBilmeSayisiYedek < DogruBilmeSayisi)
                     {
@@ -263,25 +285,23 @@ public class OyunAlti : MonoBehaviour
             {
                 YanlisMuziki = true;
                 adamDusecek = true;
+                PlayerPrefs.SetInt("Puan", Score);
                 foreach (var item in CardLetters)
                 {
-                    if (item.Card.transform.GetChild(1).GetChild(0).GetComponent<Text>().text != null)
+                    if (item.Card.transform.GetChild(1).GetChild(0).GetComponent<TextMeshProUGUI>().text != null)
                     {
-                        item.Card.transform.GetChild(1).GetChild(0).GetComponent<Text>().text = item.Letter.ToString();
+                        item.Card.transform.GetChild(1).GetChild(0).GetComponent<TextMeshProUGUI>().text = item.Letter.ToString();
                     }
                 }
                 
             }
-            //if (DusecekKafes != null && adamDusecek == true && YanlisMuziki == false)
-            //{
-            //    YanlisMuziki = true;
-            //}
         }
         if(DogruBilmeSayisiYedek == DogruBilmeSayisi)
         {
+            PlayerPrefs.SetInt("Puan", Score);
             oyunKazanildi = true;
         }
-        if (DusecekKafes != null && adamDusecek == true /*&& DusecekKafes.GetComponent<Rigidbody>().useGravity == false*/)
+        if (DusecekKafes != null && adamDusecek == true)
         {
             DusecekKafes.transform.position = Vector3.MoveTowards(DusecekKafes.transform.position, new Vector3(DusecekKafes.transform.position.x, CarpmaNoktasi.transform.position.y, DusecekKafes.transform.position.z), 150*Time.deltaTime);
             Time.timeScale = 1;

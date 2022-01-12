@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class VoiceChanging : MonoBehaviour
 {
-    public ClickControl clickControl;
+    public Click clickControl;
     public AudioSource audioSource;
     OyunBir oyunBir;
     OyunIki oyunIki;
@@ -27,7 +27,7 @@ public class VoiceChanging : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        clickControl = gameObject.GetComponent<ClickControl>();
+        clickControl = gameObject.GetComponent<Click>();
         audioSource = gameObject.GetComponent<AudioSource>();
         if (OyunBirObject != null)
             oyunBir = OyunBirObject.GetComponent<OyunBir>();
